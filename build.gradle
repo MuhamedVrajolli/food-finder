@@ -1,0 +1,87 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'org.jooq:jooq-codegen:3.13.2'
+        classpath 'org.postgresql:postgresql:42.2.10'
+    }
+}
+
+plugins {
+  id 'nu.studer.jooq' version '3.0.3'
+}
+
+apply plugin: 'java'
+apply plugin: 'jacoco'
+apply plugin: 'application'
+
+
+mainClassName = 'foodfinder.FoodFinderApplication'
+
+
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+    testImplementation     'junit:junit:4.13'
+    jooqRuntime('org.postgresql:postgresql:42.2.10')
+    runtimeOnly 'org.postgresql:postgresql:42.2.10'
+    compile 'org.jooq:jooq:3.13.2'
+}
+
+jooq {
+  def db_name
+  def db_user
+  def db_pass
+
+  if (true) {
+    def console = System.in.newReader()
+
+    db_name = "food_finder";
+    db_user = "Medi";
+    db_pass = "system";
+  }
+
+  version = '3.13.1'
+  ext['jooq.version'] = '3.13.1'
+  sample(sourceSets.main) {
+    jdbc {
+      driver = 'org.postgresql.Driver'
+      url = 'jdbc:postgresql://localhost:5432/' + "${db_name}"
+      user = "${db_user}"
+      password = "${db_pass}"
+    }
+    generator {
+      name = 'org.jooq.codegen.DefaultGenerator'
+      strategy {
+        name = 'org.jooq.codegen.DefaultGeneratorStrategy'
+      }
+      database {
+        name = 'org.jooq.meta.postgres.PostgresDatabase'
+        inputSchema = 'public'
+      }
+      target {
+        packageName = 'foodfinder.jooq'
+        directory = 'src/main/java'
+        clean = true
+      }
+    }
+  }
+}
+
+jar {
+    manifest {
+        attributes(
+                'Main-Class': 'foodfinder.FoodFinderApplication'
+        )
+    }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+ }
